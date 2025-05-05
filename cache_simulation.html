@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Simulasi Algoritma Cache (LRU)</title>
+<style>
+
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #7a7a7a;
+    color: #000000;
+    margin: 0; padding: 20px;
+    display: flex; flex-direction: column; align-items: center;
+    min-height: 100vh;
+  }
+  h1 {
+    margin-bottom: 30px;
+    color: #f3f3f3;
+    text-align: center;
+  }
+  form {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+  }
+  input[type="text"] {
+    font-size: 1rem;
+    padding: 10px 15px;
+    border-radius: 6px 0 0 6px;
+    border: none;
+    width:  280px;
+    max-width: 100%;
+    outline: none;
+  }
+  button {
+    font-size: 1rem;
+    padding: 12px 8px;
+    border-radius: 0 6px 6px 0;
+    border: none;
+    background: #000000;
+    color: #ffffff;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  button:hover {
+    background: #90aeb9;
+  }
+  .cache-container {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: center;
+    gap: 10px;
+    max-width: 350px;
+    width: 200%;
+    overflow-x: auto;
+  }
+  .cache-slot {
+    background: #ffffff;
+    border-radius: 10px;
+    min-width: 60px;
+    min-height: 60px;
+    box-shadow: 0 0 6px #00000066 inset;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+    user-select: none;
+    position: relative;
+  }
+  .cache-slot.lru {
+    box-shadow: 0 0 10px 3px #ff6347 inset;
+  }
+  .info {
+    margin-top: 15px;
+    font-size: 0.9rem;
+    max-width: 350px;
+    text-align: center;
+    color: #aaa;
+  }
+  @media (max-width: 400px) {
+    .cache-slot {
+      min-width: 50px;
+      min-height: 50px;
+      font-size: 1rem;
+    }
+  }
+</style>
+</head>
+<body>
+<h1>Simulasi Algoritma Cache (LRU)</h1>
+<form id="cacheForm" aria-label="Form input cache data">
+  <input type="text" id="cacheInput" placeholder="Masukkan data" aria-label="Input data untuk cache" maxlength="10" required />
+  <button type="submit" aria-label="Tambahkan data ke cache">Tambah</button>
+</form>
+
+<div class="cache-container" id="cacheSlots" aria-live="polite" aria-atomic="true" role="region" aria-label="Cache contents">
+
+</div>
+
+<div class="info" id="infoMsg" aria-live="polite"></div>
+
+<script>
+  (function(){
+ 
+    const CACHE_SIZE = 5;
+    let cache = [];      
+    let cacheAccess = []; 
+
+    const cacheSlotsDiv = document.getElementById("cacheSlots");
+    const infoMsg = document.getElementById("infoMsg");
+    const form = document.getElementById("cacheForm");
+    const input = document.getElementById("cacheInput");
+
+    function renderCache(highlightIndex = -1) {
+      
+      cacheSlotsDiv.innerHTML = "";
+      for(let i = 0; i < CACHE_SIZE; i++) {
+        const slot = document.createElement("div");
+        slot.className = "cache-slot";
+        if (i === highlightIndex) slot.classList.add("lru");
+
+        if(i < cache.length) {
+          slot.textContent = cache[i];
+          if(i === 0) {
+            slot.title = "Data Least Recently Used (LRU)";
+          } else {
+            slot.title = "Data cached";
+          }
+        } else {
+          slot.textContent = "-";
+          slot.title = "Kosong";
+          slot.style.opacity = 0.4;
+        }
+        cacheSlotsDiv.appendChild(slot);
+      }
+    }
+
+    function addToCache(data) {
+      data = data.toUpperCase();
+      const now = Date.now();
+
+      const existingIndex = cache.indexOf(data);
+      if(existingIndex !== -1) {
+       
+        cache.splice(existingIndex, 1); 
+        cache.push(data);                 
+        infoMsg.textContent = `Data "${data}" sudah ada pada cache, memperbarui urutan LRU.`;
+      } else {
+       
+        if(cache.length >= CACHE_SIZE) {
+          
+          const removed = cache.shift();
+          cache.push(data);
+          infoMsg.textContent = `Cache penuh, mengeluarkan data LRU "${removed}" dan menambahkan data "${data}".`;
+        } else {
+          cache.push(data);
+          infoMsg.textContent = `Menambahkan data "${data}" ke cache.`;
+        }
+      }
+    }
+
+    form.addEventListener("submit", e => {
+      e.preventDefault();
+      const value = input.value.trim();
+      if(value) {
+        if(!/^[a-zA-Z0-9]+$/.test(value)) {
+          infoMsg.textContent = "Hanya huruf dan angka yang diizinkan.";
+          input.value = "";
+          return;
+        }
+        addToCache(value);
+        renderCache();
+        input.value = "";
+        input.focus();
+      }
+    });
+
+  
+    renderCache();
+  })();
+</script>
+</body>
+</html>
+
